@@ -4,29 +4,56 @@ import { Post } from "../components/Post";
 import { Index } from "../components/AddComment";
 import { CommentsBlock } from "../components/CommentsBlock";
 import ReactMarkdown from "react-markdown";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchComments } from "../redux/slices/comments";
+import { clearComments } from "../redux/slices/comments";
+import Button from '@mui/material/Button';
 import axios from '../axios';
 
 export const FullPost = () => {
+	const dispatch = useDispatch();
 	const [data, setData] = useState();
 	const [isLoading, setIsLoading] = useState(true)
+	const { items: comments, status: commentsStatus, pagination } = useSelector(state => state.comments);
+	const isCommentsLoading = commentsStatus === 'loading';
 
 	const { id } = useParams();
 
+	// Загрузка поста
 	useEffect(() => {
 		axios.get(`/posts/${id}`)
 			.then(res => {
-				setData(res.data)
-				setIsLoading(false)
+				setData(res.data);
+				setIsLoading(false);
 			})
 			.catch(err => {
-				console.warn(err)
-				alert('Ошибка при получении статьи!')
-			})
-	}, [])
+				console.warn(err);
+				alert('Ошибка при получении статьи!');
+			});
+	}, [id]);
+
+	// Загрузка первой страницы комментариев
+	useEffect(() => {
+		if (id) {
+			// Сбросить комментарии и загрузить первую страницу
+			dispatch(clearComments())
+			dispatch(fetchComments({ postId: id, page: 1 }));
+		}
+	}, [dispatch, id]);
 
 	if (isLoading) {
-		return <Post isLoading={isLoading} isFullPost />
+		return <Post isLoading={true} isFullPost />;
 	}
+
+	const loadMore = () => {
+		if (pagination.page < pagination.pages) {
+			dispatch(fetchComments({ postId: id, page: pagination.page + 1 }));
+		}
+	};
+
+	const hasMore = pagination.page < pagination.pages;
+
+	const actualCommentsCount = comments.length;
 
 	return (
 		<>
@@ -37,7 +64,7 @@ export const FullPost = () => {
 				user={data.user}
 				createdAt={data.createdAt}
 				viewsCount={data.viewsCount}
-				commentsCount={3}
+				commentsCount={actualCommentsCount}
 				tags={data.tags}
 				isFullPost
 			>
@@ -45,26 +72,22 @@ export const FullPost = () => {
 
 			</Post>
 			<CommentsBlock
-				items={[
-					{
-						user: {
-							fullName: "Вася Пупкин",
-							avatarUrl: "https://mui.com/static/images/avatar/1.jpg",
-						},
-						text: "Это тестовый комментарий 555555",
-					},
-					{
-						user: {
-							fullName: "Иван Иванов",
-							avatarUrl: "https://mui.com/static/images/avatar/2.jpg",
-						},
-						text: "When displaying three lines or more, the avatar is not aligned at the top. You should set the prop to align the avatar at the top",
-					},
-				]}
-				isLoading={false}
+				items={comments}
+				isLoading={isCommentsLoading}
 			>
-				<Index />
+				<Index postId={id} /> {/* ← передаём postId в форму */}
 			</CommentsBlock>
+			{hasMore && (
+				<div style={{ textAlign: 'center', marginTop: 20 }}>
+					<Button
+						variant="outlined"
+						onClick={loadMore}
+						disabled={isCommentsLoading}
+					>
+						{isCommentsLoading ? 'Загрузка...' : 'Загрузить ещё'}
+					</Button>
+				</div>
+			)}
 		</>
 	);
 };

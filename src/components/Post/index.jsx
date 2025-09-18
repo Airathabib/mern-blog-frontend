@@ -67,7 +67,12 @@ export const Post = ({
 					<ul className={styles.tags}>
 						{tags.map((name) => (
 							<li key={name}>
-								<Link to={`/tag/${name}`}>#{name}</Link>
+								<Link
+									to={`/tags/${encodeURIComponent(name)}`}
+									style={{ textDecoration: 'none', color: '#007bff' }} // ← опционально: подчеркнуть, что это ссылка
+								>
+									#{name}
+								</Link>
 							</li>
 						))}
 					</ul>
