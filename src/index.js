@@ -7,39 +7,36 @@ import { ThemeProvider } from "@mui/material";
 import { Provider } from "react-redux";
 import store from './redux/store/store.js';
 import { createTheme } from "@mui/material/styles";
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { lightTheme, darkTheme } from './theme';
+import { ThemeProviderWrapper, useThemeContext } from './contexts/ThemeContext';
 import "./index.scss";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
+// Оборачиваем App, чтобы получить доступ к теме
 
-const theme = createTheme({
-	shadows: ["none",
-		'0px 1px 3px 0px rgba(0,0,0,0.12)', // elevation 1
-		'0px 3px 6px 0px rgba(0,0,0,0.16)', // elevation 2
-	],
-	palette: {
-		primary: {
-			main: "#4361ee",
-		},
-	},
-	typography: {
-		button: {
-			textTransform: "none",
-			fontWeight: 400,
-		},
-	},
-});
+function AppWithTheme() {
+	const { darkMode } = useThemeContext();
+	const theme = darkMode ? darkTheme : lightTheme;
+
+	return (
+		<MuiThemeProvider theme={theme}>
+			<CssBaseline /> {/* ✅ ПЕРЕМЕСТИЛИ СЮДА — теперь знает о теме */}
+			<App />
+		</MuiThemeProvider>
+	);
+}
 
 
 root.render(
 	<React.Fragment>
-		<CssBaseline />
-		<ThemeProvider theme={theme}>
+		<ThemeProviderWrapper> {/* ✅ Оборачиваем ВСЁ */}
 			<BrowserRouter>
 				<Provider store={store}>
-					<App />
+					<AppWithTheme />
 				</Provider>
 			</BrowserRouter>
-		</ThemeProvider>
+		</ThemeProviderWrapper>
 	</React.Fragment>
 );

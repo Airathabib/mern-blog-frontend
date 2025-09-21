@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import clsx from 'clsx';
+import { Typography } from '@mui/material'
+import CommentIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Clear';
 import EditIcon from '@mui/icons-material/Edit';
 import EyeIcon from '@mui/icons-material/RemoveRedEyeOutlined';
-import CommentIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import { Link } from 'react-router-dom';
 import { UserInfo } from '../UserInfo';
 import { PostSkeleton } from './Skeleton';
 import { useDispatch } from 'react-redux';
 import styles from './Post.module.scss';
 import { fetchRemovePost } from '../../redux/slices/posts';
+import { Box } from '@mui/material';
+import { ConfirmDialog } from '../confirmDialog';
 
 export const Post = ({
 	id,
@@ -28,25 +31,46 @@ export const Post = ({
 }) => {
 	const dispatch = useDispatch();
 
+	const [confirmOpen, setConfirmOpen] = useState(false);
+	const handleOpenConfirm = () => setConfirmOpen(true);
+	const handleCloseConfirm = () => setConfirmOpen(false);
+
+
+	const handleConfirmRemove = () => {
+		dispatch(fetchRemovePost(id));
+		setConfirmOpen(false);
+	};
+
 	if (isLoading) {
 		return <PostSkeleton />;
 	}
 
-	const onClickRemove = () => {
-		if (window.confirm('Вы действительно хотите удалить статью?'))
-			dispatch(fetchRemovePost(id))
-	};
-
 	return (
-		<div className={clsx(styles.root, { [styles.rootFull]: isFullPost })}>
+		<Box
+			sx={{
+				maxWidth: isFullPost ? '1440x' : '100%', // ← ограничиваем ширину на FullPost
+				width: '100%',
+				mx: 'auto', // ← центрируем
+				backgroundColor: 'background.paper',
+				border: '1px solid',
+				borderColor: 'divider',
+				borderRadius: 2,
+				padding: { xs: 2, md: isFullPost ? 4 : 3 },
+				boxShadow: 1,
+				mb: 4,
+				position: 'relative',
+				overflow: 'visible',
+			}}
+		>
 			{isEditable && (
 				<div className={styles.editButtons}>
 					<Link to={`/posts/${id}/edit`}>
-						<IconButton color="primary">
+						<IconButton color="primary" sx={{ color: 'primary.main' }}>
 							<EditIcon />
 						</IconButton>
 					</Link>
-					<IconButton onClick={onClickRemove} color="secondary">
+					<IconButton onClick={handleOpenConfirm} color="error"
+						sx={{ color: 'error.main' }}>
 						<DeleteIcon />
 					</IconButton>
 				</div>
@@ -61,22 +85,68 @@ export const Post = ({
 			<div className={styles.wrapper}>
 				<UserInfo {...user} additionalText={createdAt} />
 				<div className={styles.indention}>
-					<h2 className={clsx(styles.title, { [styles.titleFull]: isFullPost })}>
-						{isFullPost ? title : <Link to={`/posts/${id}`}>{title}</Link>}
-					</h2>
+					{isFullPost ? (
+						<Typography
+							variant={isFullPost ? "h2" : "h4"}
+							component="h2"
+							sx={{
+								color: 'text.primary',
+								fontSize: isFullPost ? '42px' : '28px',
+								fontWeight: isFullPost ? 900 : 'normal',
+								margin: 0,
+								'&:hover': {
+									color: 'primary.main', // ← цвет из темы при наведении
+								},
+							}}
+						>
+							{title}
+						</Typography>
+					) : (
+						<Typography
+							variant="h4"
+							component={Link}
+							to={`/posts/${id}`}
+							sx={{
+								color: 'text.primary',
+								fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+								lineHeight: 1.3,
+								fontWeight: 700,
+								margin: 0,
+								textDecoration: 'none',
+								display: 'block',
+								wordBreak: 'break-word',
+								overflowWrap: 'break-word',
+								'&:hover': {
+									color: 'primary.main',
+								},
+							}}
+						>
+							{title}
+						</Typography>
+					)}
 					<ul className={styles.tags}>
 						{tags.map((name) => (
 							<li key={name}>
-								<Link
+								<Typography
+									component={Link}
 									to={`/tags/${encodeURIComponent(name)}`}
-									style={{ textDecoration: 'none', color: '#007bff' }} // ← опционально: подчеркнуть, что это ссылка
+									sx={{
+										textDecoration: 'none',
+										color: 'primary.main',
+										fontWeight: 'bold',
+										'&:hover': { textDecoration: 'underline' },
+									}}
 								>
 									#{name}
-								</Link>
+								</Typography>
 							</li>
 						))}
 					</ul>
-					{children && <div className={styles.content}>{children}</div>}
+					{children && (
+						<Box className={styles.content} sx={{ color: 'text.primary' }}> 
+							{children}
+						</Box>
+					)}
 					<ul className={styles.postDetails}>
 						<li>
 							<EyeIcon />
@@ -89,6 +159,15 @@ export const Post = ({
 					</ul>
 				</div>
 			</div>
-		</div>
+			<ConfirmDialog
+				open={confirmOpen}
+				title="Удаление статьи"
+				message="Вы действительно хотите удалить эту статью?"
+				confirmText="Удалить"
+				cancelText="Отмена"
+				onConfirm={handleConfirmRemove}
+				onCancel={handleCloseConfirm}
+			/>
+		</Box>
 	);
 };

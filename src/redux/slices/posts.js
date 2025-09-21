@@ -15,13 +15,13 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async ({ sort = '
 	}
 });
 
-export const fetchTags = createAsyncThunk('posts/fetchTags', async () => {
+export const fetchTags = createAsyncThunk('posts/fetchTags', async (sort = 'new', { rejectWithValue }) => {
 	try {
-		const { data } = await axios.get('/tags');
+		const { data } = await axios.get(`/tags?sort=${sort}`);
 		return data;
 	} catch (err) {
-		console.error('Ошибка при загрузке тегов:', err);
-		throw err;
+		console.error(err);
+		return rejectWithValue(err.response?.data?.message || 'Ошибка загрузки');
 	}
 });
 

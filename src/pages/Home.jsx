@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Grid from '@mui/material/Grid';
+import { Box, Typography } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom';
+import { Link } from '@mui/material'; // ← для стилизации через sx
 import { Post } from '../components/Post';
 import { TagsBlock, } from '../components/TagsBlock';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { CommentsBlock } from '../components/CommentsBlock';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPosts, fetchTags } from '../redux/slices/posts';
@@ -17,83 +20,157 @@ export const Home = () => {
 	const { posts, tags } = useSelector((state) => state.posts);
 	const { items: comments, status: commentsStatus } = useSelector((state) => state.comments);
 
+	const [showAllTags, setShowAllTags] = useState(false);
+	;
+
 	const [activeTab, setActiveTab] = useState(0)
 	const { tagName } = useParams()
 	const isPostLoading = posts.status === 'loading';
 	const isTagsLoading = tags.status === 'loading';
 	const isCommentsLoading = commentsStatus === 'loading';
 
+	const tagsToShow = showAllTags ? tags.items : tags.items.slice(0, 10)
 
 	useEffect(() => {
-		dispatch(fetchTags());
-		dispatch(fetchComments());
+		dispatch(fetchComments({}));
 	}, [dispatch]);
 
 	useEffect(() => {
 		const sortParam = activeTab === 0 ? 'new' : 'popular';
+		dispatch(fetchTags(sortParam)); // ← загружаем теги в зависимости от сортировки
 		dispatch(fetchPosts({ sort: sortParam, tag: tagName || null }));
 	}, [dispatch, activeTab, tagName]);
+
+
+
 	return (
 		<>
-			<Tabs
-				style={{ marginBottom: 15 }}
-				value={activeTab}
-				onChange={(e, newValue) => setActiveTab(newValue)}
-				aria-label="basic tabs example"
-			>
-				<Tab label="Новые" />
-				<Tab label="Популярные" />
-			</Tabs>
+			{/* Адаптивные табы */}
+			<Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+				<Tabs
+					value={activeTab}
+					onChange={(e, newValue) => setActiveTab(newValue)}
+					aria-label="basic tabs example"
+					variant="scrollable"
+					scrollButtons="auto"
+					sx={{
+						'& .MuiTabs-indicator': {
+							display: 'none', // ← убираем стандартную полоску
+						},
+						'& .MuiTab-root': {
+							border: '1px solid',
+							borderColor: 'divider',
+							borderRadius: '8px',
+							padding: '6px 16px',
+							fontWeight: 500,
+							fontSize: { xs: '0.875rem', sm: '1rem' },
+							textTransform: 'none',
+							color: 'text.primary',
+							backgroundColor: 'background.paper',
+							boxShadow: 1,
+							transition: 'all 0.3s ease',
+							mr: 1,
+							'&:hover': {
+								backgroundColor: 'action.hover',
+								boxShadow: 2,
+							},
+							'&.Mui-selected': {
+								backgroundColor: 'primary.main',
+								color: 'primary.contrastText',
+								borderColor: 'primary.main',
+								boxShadow: 3,
+								'&:hover': {
+									backgroundColor: 'primary.dark',
+								},
+							},
+						},
+					}}
+				>
+					<Tab label="Новые" />
+					<Tab label="Популярные" />
+				</Tabs>
+			</Box>
+
 			{tagName && (
 				<>
-					<h2 style={{ marginBottom: 20, color: 'rgb(106 105 113 / 43%)', fontSize: '2.5rem' }}>#{decodeURIComponent(tagName)}</h2>
+					<Typography
+						variant="h4"
+						sx={{
+							mb: 1,
+							color: 'text.secondary',
+							fontSize: { xs: '1.5rem', sm: '2.5rem' },
+						}}
+					>
+						#{decodeURIComponent(tagName)}
+					</Typography>
 					<Link
 						to="/"
-						style={{
+						component={RouterLink}
+						sx={{
 							display: 'inline-block',
-							marginBottom: 20,
-							padding: '8px 16px',
-							background: 'rgb(79 159 139)',
-							color: 'white',
+							mb: 3,
+							px: 2,
+							py: 1,
+							backgroundColor: 'primary.main',
+							color: 'primary.contrastText',
 							textDecoration: 'none',
-							borderRadius: 4,
+							borderRadius: 2,
+							fontWeight: 500,
+							fontSize: { xs: '0.875rem', sm: '1rem' },
+							boxShadow: 1,
+							transition: 'background-color 0.3s ease, transform 0.2s ease',
+							'&:hover': {
+								backgroundColor: 'primary.dark',
+								transform: 'translateY(-2px)',
+							},
+							'&:active': {
+								transform: 'translateY(0)',
+							},
 						}}
 					>
 						Сбросить фильтр
 					</Link>
 				</>
 			)}
-			<Grid container spacing={4}>
-				<Grid xs={8} item >
-					{(isPostLoading ? [...Array(5)] : posts.items).map((obj, idx) => {
-						return isPostLoading ? (
-							<Post key={idx} isLoading={true} />
-						) : (
-							<Post
-								key={obj._id}
-								id={obj._id}
-								title={obj.title}
-								imageUrl={obj.imageUrl ? `http://localhost:4444${obj.imageUrl}` : ''}
-								user={obj.user}
-								createdAt={obj.createdAt}
-								viewsCount={obj.viewsCount}
-								commentsCount={obj.commentsCount}
-								tags={obj.tags}
-								isEditable={userData?._id === (obj.user?._id || null)}
-							/>
-						);
-					})}
-				</Grid>
-				<Grid xs={4} item>
-					<TagsBlock items={tags.items} isLoading={isTagsLoading} />
 
-					{/* Последние 5 комментариев из всей БД */}
-					<CommentsBlock
-						items={comments.slice(0, 5)} // ← последние 5
-						isLoading={isCommentsLoading}
-					/>
+			<Box sx={{ px: { xs: 2, md: 0 } }}>
+				<Grid container spacing={3}>
+					<Grid xs={12} md={8} item>
+						{(isPostLoading ? [...Array(5)] : posts.items).map((obj, idx) => {
+							return isPostLoading ? (
+								<Post key={idx} isLoading={true} />
+							) : (
+								<Post
+									key={obj._id}
+									id={obj._id}
+									title={obj.title}
+									imageUrl={obj.imageUrl ? `http://localhost:4444${obj.imageUrl}` : ''}
+									user={obj.user}
+									createdAt={obj.createdAt}
+									viewsCount={obj.viewsCount}
+									commentsCount={obj.commentsCount || 0}
+									tags={obj.tags}
+									isEditable={String(userData?._id) === String(obj.user?._id)}
+								/>
+							);
+						})}
+					</Grid>
+					<Grid xs={12} md={4} item>
+						<TagsBlock
+							items={tagsToShow}
+							isLoading={isTagsLoading}
+							onShowAll={() => setShowAllTags(true)}
+							showAll={showAllTags}
+						/>
+						<CommentsBlock
+							items={comments.slice(0, 5)}
+							isLoading={isCommentsLoading}
+							isCompact={true}
+						/>
+					</Grid>
 				</Grid>
-			</Grid>
+			</Box>
+
 		</>
 	);
 };

@@ -19,17 +19,18 @@ export const removeComment = createAsyncThunk(
 // Асинхронный экшен: получить комментарии поста
 export const fetchComments = createAsyncThunk(
 	'comments/fetchComments',
-	async ({ postId, page = 1 }, { rejectWithValue }) => {
+	async ({ postId, page = 1, sort = 'new' } = {}, { rejectWithValue }) => { // ← добавили sort
 		try {
 			const url = postId
-				? `/comments?post=${postId}&page=${page}&limit=10`
-				: '/comments?page=1&limit=5'; // для главной — последние 5
+				? `/comments?post=${postId}&page=${page}&limit=10&sort=${sort}`
+				: '/comments?page=1&limit=5&sort=new';
 
 			const { data } = await axios.get(url);
 			return {
 				...data,
-				postId, // чтобы знать, к какому посту относятся
+				postId,
 				page,
+				sort, // ← сохраняем для редьюсера
 			};
 		} catch (err) {
 			return rejectWithValue(err.response?.data?.message || 'Ошибка загрузки');
@@ -41,11 +42,12 @@ export const fetchComments = createAsyncThunk(
 // Асинхронный экшен: добавить комментарий
 export const addComment = createAsyncThunk(
 	'comments/addComment',
-	async ({ postId, text }, { rejectWithValue }) => {
+	async ({ postId, text, parentComment = null }, { rejectWithValue }) => { // ← добавили parentComment
 		try {
 			const response = await axios.post('/comments', {
 				text,
 				post: postId,
+				parentComment, // ← передаём
 			});
 			return response.data;
 		} catch (err) {
@@ -54,6 +56,45 @@ export const addComment = createAsyncThunk(
 	}
 );
 
+
+// Экшен для обновления комментария
+export const updateComment = createAsyncThunk(
+	'comments/updateComment',
+	async ({ commentId, text }, { rejectWithValue }) => {
+		try {
+			const { data } = await axios.put(`/comments/${commentId}`, { text });
+			return data; // возвращаем обновлённый комментарий
+		} catch (err) {
+			return rejectWithValue(err.response?.data?.message || 'Ошибка обновления');
+		}
+	}
+);
+
+// лайк
+export const likeComment = createAsyncThunk(
+	'comments/likeComment',
+	async (commentId, { rejectWithValue, getState }) => {
+		try {
+			const { data } = await axios.post(`/comments/${commentId}/like`);
+			return { commentId, ...data };
+		} catch (err) {
+			return rejectWithValue(err.response?.data?.message || 'Ошибка лайка');
+		}
+	}
+);
+
+// дизлайк
+export const dislikeComment = createAsyncThunk(
+	'comments/dislikeComment',
+	async (commentId, { rejectWithValue, getState }) => {
+		try {
+			const { data } = await axios.post(`/comments/${commentId}/dislike`);
+			return { commentId, ...data };
+		} catch (err) {
+			return rejectWithValue(err.response?.data?.message || 'Ошибка дизлайка');
+		}
+	}
+);
 
 const initialState = {
 	items: [],
@@ -64,6 +105,7 @@ const initialState = {
 		total: 0,
 		pages: 0,
 		postId: null,
+		sort: 'new',
 	},
 };
 
@@ -73,7 +115,12 @@ const commentsSlice = createSlice({
 	reducers: {
 		clearComments: (state) => {
 			state.items = [];
-			state.pagination = { page: 1, total: 0, pages: 0, postId: null };
+			state.pagination = {
+				page: 1,
+				total: 0,
+				pages: 0,
+				postId: null
+			};
 		},
 	},
 	extraReducers: (builder) => {
@@ -94,21 +141,21 @@ const commentsSlice = createSlice({
 			})
 			.addCase(fetchComments.fulfilled, (state, action) => {
 				state.status = 'succeeded';
-				const { items, page, postId } = action.payload;
+				const { items, page, postId, sort } = action.payload;
 
 				if (page === 1) {
-					// Первая страница — заменяем список
 					state.items = items;
 				} else {
-					// Последующие — добавляем в конец
 					state.items = [...state.items, ...items];
 				}
 
 				state.pagination = {
+					...state.pagination,
 					page,
 					total: action.payload.total,
 					pages: action.payload.pages,
-					postId, // чтобы не смешивать комментарии разных постов
+					postId,
+					sort, // ← сохраняем текущую сортировку
 				};
 			})
 			.addCase(fetchComments.rejected, (state, action) => {
@@ -128,7 +175,37 @@ const commentsSlice = createSlice({
 			.addCase(addComment.rejected, (state, action) => {
 				state.status = 'failed';
 				state.error = action.payload;
-			});
+			})
+			.addCase(updateComment.fulfilled, (state, action) => {
+				// Находим и заменяем комментарий в списке
+				const index = state.items.findIndex(comment => comment._id === action.payload._id);
+				if (index !== -1) {
+					state.items[index] = action.payload;
+				}
+				state.status = 'succeeded';
+			})
+			.addCase(updateComment.rejected, (state, action) => {
+				state.status = 'failed';
+				state.error = action.payload;
+			})
+			.addCase(likeComment.fulfilled, (state, action) => {
+				const { commentId, likes, dislikes, userAction } = action.payload;
+				const comment = state.items.find(c => c._id === commentId);
+				if (comment) {
+					comment.likesCount = likes;      // ← число
+					comment.dislikesCount = dislikes; // ← число
+					comment.userAction = userAction;
+				}
+			})
+			.addCase(dislikeComment.fulfilled, (state, action) => {
+				const { commentId, likes, dislikes, userAction } = action.payload;
+				const comment = state.items.find(c => c._id === commentId);
+				if (comment) {
+					comment.likesCount = likes;
+					comment.dislikesCount = dislikes;
+					comment.userAction = userAction;
+				}
+			})
 	},
 });
 

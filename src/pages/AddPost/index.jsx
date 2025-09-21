@@ -2,112 +2,179 @@ import React, { useState, useRef, useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
-import SimpleMDE from 'react-simplemde-editor';
+import { Box } from '@mui/material'
 import { useSelector } from 'react-redux';
 import { selectIsAuth } from '../../redux/slices/auth';
 import { useNavigate, Navigate, useParams } from 'react-router-dom';
-import 'easymde/dist/easymde.min.css';
+import MDEditor from '@uiw/react-md-editor';
+import { useState as useMdState } from '@uiw/react-md-editor';
+import { commands } from '@uiw/react-md-editor'; // ← стандартные команды
+import ImageIcon from '@mui/icons-material/Image'; // ← иконка/ ← стандартные команды
 import axios from '../../axios';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import { useThemeContext } from '../../contexts/ThemeContext'; // ← добавь путь к твоему ThemeContext
 import styles from './AddPost.module.scss';
 
 export const AddPost = () => {
 	const { id } = useParams()
 	const navigate = useNavigate()
 	const isAuth = useSelector(selectIsAuth)
+	const { darkMode } = useThemeContext();
 	const [text, setText] = useState('')
 	const [isLoading, setIsLoading] = useState(false)
 	const [title, setTitle] = useState('')
 	const [tags, setTags] = useState('')
 	const [imageUrl, setImageUrl] = useState('')
 	const inputFieleRef = useRef(null)
+	const [previewMode, setPreviewMode] = useState('edit');
+	const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
 
 	const isEditing = Boolean(id)
 
 	const handleChangeFile = async (event) => {
 		try {
 			const formData = new FormData();
-			const file = event.target.files[0]
-			formData.append('image', file)
-			const { data } = await axios.post('/upload', formData)
-			setImageUrl(data.url)
+			const file = event.target.files[0];
+			if (!file) return;
+
+			formData.append('image', file);
+
+			const token = window.localStorage.getItem('token');
+			const { data } = await axios.post('/upload', formData, {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'multipart/form-data',
+				},
+			});
+
+			setImageUrl(data.url);
 		} catch (err) {
 			console.warn(err);
-			alert('Ошибка при загрузке файла!')
+			showSnackbar('Ошибка при загрузке файла!', 'error');
 		}
 	};
 
 	const onClickRemoveImage = () => {
-		setImageUrl('')
+		setImageUrl('');
 	};
-
-	const onChange = React.useCallback((value) => {
-		setText(value);
-	}, []);
 
 	const onSubmit = async () => {
 		try {
-			setIsLoading(true)
+			setIsLoading(true);
 
 			const fields = {
 				title,
-				tags,
+				tags, // ← массив!
 				imageUrl,
-				text
-			}
+				text,
+			};
 
 			const { data } = isEditing
 				? await axios.patch(`/posts/${id}`, fields)
 				: await axios.post('/posts', fields);
 
-			const _id = isEditing ? id : data._id
-
-			navigate(`/posts/${_id}`)
+			const _id = isEditing ? id : data._id;
+			navigate(`/posts/${_id}`);
 		} catch (err) {
 			console.warn(err);
-			alert('Ошибка при создании статьи!')
+			showSnackbar('Ошибка при создании статьи!', 'error');
+		} finally {
+			setIsLoading(false);
 		}
-	}
+	};
 
 	useEffect(() => {
 		if (id) {
 			axios.get(`/posts/${id}`)
 				.then(({ data }) => {
-					setTitle(data.title)
-					setText(data.text)
-					setImageUrl(data.imageUrl)
-					setTags(data.tags.join(','))
+					setTitle(data.title);
+					setText(data.text);
+					setImageUrl(data.imageUrl);
+					setTags(data.tags.join(', '));
 				})
 				.catch(err => {
 					console.warn(err);
-					alert("Ошибка при получении статьи!")
-				})
+					showSnackbar('Ошибка при получении статьи!', 'error');
+				});
 		}
-	}, [])
+	}, [id]);
 
-	const options = React.useMemo(
-		() => ({
-			spellChecker: false,
-			maxHeight: '400px',
-			autofocus: true,
-			placeholder: 'Введите текст...',
-			status: false,
-			autosave: {
-				enabled: true,
-				delay: 1000,
-			},
-		}),
-		[],
-	);
+	const showSnackbar = (message, severity = 'error') => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar(prev => ({ ...prev, open: false }));
+	};
+
+	const handlePaste = async (event) => {
+		const items = event.clipboardData.items;
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			if (item.type.indexOf('image') === 0) {
+				const file = item.getAsFile();
+				await uploadImage(file);
+				break;
+			}
+		}
+	};
+
+	const handleDrop = async (event) => {
+		event.preventDefault();
+		const files = event.dataTransfer.files;
+		if (files.length > 0) {
+			await uploadImage(files[0]);
+		}
+	};
+
+	const imageUploadCommand = {
+		name: 'image-upload',
+		keyCommand: 'imageUpload',
+		buttonProps: { 'aria-label': 'Вставить изображение' },
+		icon: () => <ImageIcon fontSize="small" />,
+		execute: () => {
+			inputFieleRef.current?.click(); // ← открываем файловый input
+		},
+	};
+
+	const uploadImage = async (file) => {
+		try {
+			const formData = new FormData();
+			formData.append('image', file);
+
+			const token = window.localStorage.getItem('token');
+			const { data } = await axios.post('/upload', formData, {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'multipart/form-data',
+				},
+			});
+
+			// Вставляем Markdown-ссылку на изображение в редактор
+			const imageUrl = `http://localhost:4444${data.url}`;
+			const markdownImage = `![${file.name}](${imageUrl})\n`;
+			setText(prev => prev + markdownImage);
+		} catch (err) {
+			console.warn(err);
+			showSnackbar('Ошибка при загрузке изображения!', 'error');
+		}
+	};
+
+
 
 	if (!window.localStorage.getItem('token') && !isAuth) {
-		return <Navigate to='/' />
+		return <Navigate to="/" />;
 	}
 
 	return (
-		<Paper style={{ padding: 30 }}>
-			<Button onClick={() => inputFieleRef.current.click()}
+		<Paper sx={{ p: 4 }}>
+			<Button
+				onClick={() => inputFieleRef.current.click()}
 				variant="outlined"
-				size="large">
+				size="large"
+				sx={{ mb: 3 }}
+			>
 				Загрузить превью
 			</Button>
 
@@ -115,47 +182,118 @@ export const AddPost = () => {
 				type="file"
 				ref={inputFieleRef}
 				onChange={handleChangeFile}
-				hidden />
+				hidden
+			/>
 			{imageUrl && (
 				<>
-					<Button variant="contained" color="error" onClick={onClickRemoveImage}>
+					<Button variant="contained" color="error" onClick={onClickRemoveImage} sx={{ mb: 2 }}>
 						Удалить
 					</Button>
-
 					<img className={styles.image} src={`http://localhost:4444${imageUrl}`} alt="Uploaded" />
 				</>
 			)}
 
-			<br />
-			<br />
 			<TextField
-				classes={{ root: styles.title }}
-				variant="standard"
-				placeholder="Заголовок статьи..."
+				label="Заголовок статьи"
+				variant="outlined"
 				value={title}
 				onChange={(e) => setTitle(e.target.value)}
 				fullWidth
+				sx={{ mb: 3 }}
 			/>
 			<TextField
-				classes={{ root: styles.tags }}
-				variant="standard"
-				placeholder="Тэги,(отделяйте запятыми)"
+				label="Тэги (через запятую)"
+				variant="outlined"
 				value={tags}
 				onChange={(e) => setTags(e.target.value)}
-				fullWidth />
-			<SimpleMDE
-				className={styles.editor}
+				fullWidth
+				sx={{ mb: 3 }}
+			/>
+			{/* Переключатель режима */}
+			<Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+				<Button
+					variant={previewMode === 'edit' ? 'contained' : 'outlined'}
+					onClick={() => setPreviewMode('edit')}
+					size="small"
+				>
+					Редактировать
+				</Button>
+				<Button
+					variant={previewMode === 'preview' ? 'contained' : 'outlined'}
+					onClick={() => setPreviewMode('preview')}
+					size="small"
+				>
+					Превью
+				</Button>
+			</Box>
+
+			{/* Новый редактор */}
+			<MDEditor
 				value={text}
-				onChange={onChange}
-				options={options} />
+				onChange={setText}
+				height={400}
+				preview={previewMode}
+				visibleDragbar={false}
+				style={{
+					borderRadius: 8,
+					border: '1px solid',
+					borderColor: 'divider',
+				}}
+				textareaProps={{
+					placeholder: 'Введите текст статьи...',
+					onPaste: handlePaste,
+				}}
+				onDrop={handleDrop}
+				commands={[
+					commands.bold,
+					commands.italic,
+					commands.strikethrough,
+					commands.divider,
+					commands.link,
+					imageUploadCommand, // ← наша кастомная кнопка
+					commands.divider,
+					commands.quote,
+					commands.code,
+					commands.divider,
+					commands.unorderedListCommand,
+					commands.orderedListCommand,
+				]}
+			/>
+
 			<div className={styles.buttons}>
-				<Button onClick={onSubmit} size="large" variant="contained">
+				<Button
+					onClick={onSubmit}
+					size="large"
+					variant="contained"
+					disabled={isLoading}
+					sx={{ mr: 2 }}
+				>
 					{isEditing ? 'Сохранить' : 'Опубликовать'}
 				</Button>
-				<a href="/">
-					<Button size="large">Отмена</Button>
-				</a>
+				<Button
+					component="a"
+					href="/"
+					size="large"
+					variant="outlined"
+				>
+					Отмена
+				</Button>
 			</div>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					sx={{ width: '100%' }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Paper>
 	);
 };

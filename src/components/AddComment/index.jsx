@@ -1,28 +1,46 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import styles from "./AddComment.module.scss";
 import { addComment } from "../../redux/slices/comments";
 import { selectIsAuth, selectUserData } from '../../redux/slices/auth';
 import { Navigate } from "react-router-dom";
 import TextField from "@mui/material/TextField";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import styles from "./AddComment.module.scss";
 
 export const Index = ({ postId }) => {
 	const dispatch = useDispatch();
 	const isAuth = useSelector(selectIsAuth);
-	const userData = useSelector(selectUserData); // ← чтобы показать аватар авторизованного пользователя
+	const userData = useSelector(selectUserData);// ← чтобы показать аватар авторизованного пользователя
 	const [text, setText] = useState('');
+	const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
 
 	if (!isAuth) {
 		return <Navigate to="/" />;
 	}
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		if (!text.trim() || !postId) return;
 
-		await dispatch(addComment({ postId, text }));
-		setText(''); // Очистить поле после отправки
+		try {
+			await dispatch(addComment({ postId, text })).unwrap();
+			setText('');
+			showSnackbar('Комментарий добавлен!', 'success');
+		} catch (err) {
+			showSnackbar('Ошибка при добавлении', 'error');
+		}
+	};
+
+	const showSnackbar = (message, severity = 'success') => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar({ ...snackbar, open: false });
 	};
 
 	return (
@@ -34,9 +52,7 @@ export const Index = ({ postId }) => {
 					alt={userData?.fullName || "User"}
 				/>
 				<div className={styles.form}>
-
 					<TextField
-						autoFocus
 						label="Написать комментарий"
 						variant="outlined"
 						maxRows={10}
@@ -54,6 +70,22 @@ export const Index = ({ postId }) => {
 						Отправить
 					</Button>
 				</div>
+
+				{/* Snackbar */}
+				<Snackbar
+					open={snackbar.open}
+					autoHideDuration={3000}
+					onClose={handleCloseSnackbar}
+					anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+				>
+					<Alert
+						onClose={handleCloseSnackbar}
+						severity={snackbar.severity}
+						sx={{ width: '100%' }}
+					>
+						{snackbar.message}
+					</Alert>
+				</Snackbar>
 			</form>
 		</>
 	);

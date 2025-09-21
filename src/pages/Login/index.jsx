@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Paper from "@mui/material/Paper";
@@ -8,10 +8,13 @@ import styles from "./Login.module.scss";
 import { Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAuth, selectIsAuth } from "../../redux/slices/auth";
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 export const Login = () => {
 	const dispatch = useDispatch()
 	const isAuth = useSelector(selectIsAuth)
+	const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
 
 	const {
 		register,
@@ -26,19 +29,27 @@ export const Login = () => {
 	});
 
 	const onSubmit = async (values) => {
-
-		const data = await dispatch(fetchAuth(values));
-		if (!data.payload) {
-			alert('Не удалось авторизоватся!')
+		try {
+			const result = await dispatch(fetchAuth(values)).unwrap(); // ← .unwrap() выбросит ошибку, если экшен rejected
+			if ('token' in result) {
+				window.localStorage.setItem('token', result.token);
+			}
+		} catch (error) {
+			// Показываем сообщение об ошибке
+			showSnackbar(
+				typeof error === 'string' ? error : 'Не удалось авторизоваться!',
+				'error'
+			);
 		}
-		if ('token' in data.payload) {
-			window.localStorage.setItem('token', data.payload.token)
-		}
-	}
+	};
 
-	useEffect(() => {
+	const showSnackbar = (message, severity = 'error') => {
+		setSnackbar({ open: true, message, severity });
+	};
 
-	}, [])
+	const handleCloseSnackbar = () => {
+		setSnackbar(prev => ({ ...prev, open: false }));
+	};
 
 	if (isAuth) {
 		return <Navigate to="/" />
@@ -66,12 +77,33 @@ export const Login = () => {
 					helperText={errors.password?.message}
 					{...register('password', { required: "Укажите пароль!" })}
 					fullWidth
-
 				/>
-				<Button disabled={!isValid} type="submit" size="large" variant="contained" fullWidth>
+				<Button
+					disabled={!isValid}
+					type="submit"
+					size="large"
+					variant="contained"
+					fullWidth
+					sx={{ mt: 2 }}
+				>
 					Войти
 				</Button>
 			</form>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					sx={{ width: '100%' }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Paper>
 	);
 };
