@@ -5,18 +5,16 @@ import { Index } from "../components/AddComment";
 import { CommentsBlock } from "../components/CommentsBlock";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchComments, clearComments } from "../redux/slices/comments";
-import { Box, Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
-import Tab from '@mui/material/Tab';
-import Container from '@mui/material/Container'
-import { CodeBlock } from '../components/CodeBlock'
-import BoltIcon from '@mui/icons-material/Bolt'; // для "Новых"
-import ScheduleIcon from '@mui/icons-material/Schedule'; // для "Старых"
+import { Box, Typography, Container, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { CodeBlock } from '../components/CodeBlock';
+import BoltIcon from '@mui/icons-material/Bolt';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import axios from '../axios';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from 'rehype-raw';
-;
+
 
 
 export const FullPost = () => {
@@ -24,26 +22,24 @@ export const FullPost = () => {
 	const [data, setData] = useState();
 	const [isLoading, setIsLoading] = useState(true)
 	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false); // ← флаг загрузки
-	// Состояние сортировки
-	const [sort, setSort] = useState(() => {
-		// Читаем из localStorage при первом рендере
-		return localStorage.getItem('commentSort') || 'new';
-	});
+	const [sort, setSort] = useState(() => localStorage.getItem('commentSort') || 'new');
+	const [viewMode, setViewMode] = useState(() => localStorage.getItem('postViewMode') || 'preview');
 	const { items: comments, status: commentsStatus, pagination } = useSelector(state => state.comments);
 	const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'error' });
 
-	const isCommentsLoading = commentsStatus === 'loading';
-
 	const { id } = useParams();
 	const observer = useRef();
-	const loadMoreTimer = useRef(null); // ← для debounce
+	const loadMoreTimer = useRef(null);
 
+	const isCommentsLoading = commentsStatus === 'loading';
 
-
-	// Сохраняем в localStorage при изменении
 	useEffect(() => {
 		localStorage.setItem('commentSort', sort);
 	}, [sort]);
+
+	useEffect(() => {
+		localStorage.setItem('postViewMode', viewMode); // ← сохраняем выбор режима
+	}, [viewMode]);
 
 	// Загрузка поста
 	useEffect(() => {
@@ -61,7 +57,6 @@ export const FullPost = () => {
 	// Загрузка первой страницы комментариев
 	useEffect(() => {
 		if (id) {
-			// Сбросить комментарии и загрузить первую страницу
 			dispatch(clearComments())
 			dispatch(fetchComments({ postId: id, page: 1, sort }));
 		}
@@ -73,12 +68,9 @@ export const FullPost = () => {
 		if (!pagination || isCommentsLoading || isFetchingNextPage) return;
 
 		const loadMoreDebounced = () => {
-			// Очищаем предыдущий таймер
 			if (loadMoreTimer.current) {
 				clearTimeout(loadMoreTimer.current);
 			}
-
-			// Устанавливаем новый таймер — загрузим через 300ms
 			loadMoreTimer.current = setTimeout(() => {
 				if (pagination.page < pagination.pages) {
 					setIsFetchingNextPage(true);
@@ -132,9 +124,8 @@ export const FullPost = () => {
 	const actualCommentsCount = comments.length || 0;
 
 	return (
-		<>
-
-			<Box sx={{ px: { xs: 2, md: 0 } }}>
+		<Container maxWidth="lg">
+			<Box sx={{ mt: 4 }}>
 				<Post
 					id={data._id}
 					title={data.title}
@@ -148,13 +139,16 @@ export const FullPost = () => {
 				>
 					<Box
 						sx={{
+							textAlign: 'left',
 							color: 'text.primary',
 							'& h1, & h2, & h3, & h4, & h5, & h6': {
 								color: 'text.primary',
 								mt: 2,
+								textAlign: 'left',
 							},
 							'& p': {
 								mb: 1,
+								textAlign: 'left',
 							},
 							'& a': {
 								color: 'primary.main',
@@ -169,30 +163,96 @@ export const FullPost = () => {
 							},
 						}}
 					>
-						<ReactMarkdown
-							rehypePlugins={[rehypeRaw]}
-							components={{
-								code({ node, inline, className, children, ...props }) {
-									const match = /language-(\w+)/.exec(className || '');
-									return !inline && match ? (
-										<CodeBlock
-											language={match[1]}
-											value={String(children).replace(/\n$/, '')}
-											{...props}
-										/>
-									) : (
-										<code className={className} {...props}>
-											{children}
-										</code>
-									);
-								},
-							}}
-						>
-							{data.text}
-						</ReactMarkdown>
+						{/* Переключатель режимов */}
+						<Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+							<ToggleButtonGroup
+								value={viewMode}
+								exclusive
+								onChange={(e, newValue) => newValue && setViewMode(newValue)}
+								size="small"
+								sx={{
+									'& .MuiToggleButton-root': {
+										border: '1px solid',
+										borderColor: 'divider',
+										borderRadius: '8px',
+										padding: '8px 16px',
+										fontWeight: 500,
+										fontSize: '0.875rem',
+										textTransform: 'none',
+										color: 'text.primary',
+										backgroundColor: 'background.paper',
+										boxShadow: 1,
+										transition: 'all 0.3s ease',
+										'&:hover': {
+											backgroundColor: 'action.hover',
+											boxShadow: 2,
+										},
+										'&.Mui-selected': {
+											backgroundColor: 'primary.main',
+											color: 'primary.contrastText',
+											borderColor: 'primary.main',
+											boxShadow: 3,
+											'&:hover': {
+												backgroundColor: 'primary.dark',
+											},
+										},
+									},
+								}}
+							>
+								<ToggleButton value="markdown" aria-label="режим markdown">
+									Markdown
+								</ToggleButton>
+								<ToggleButton value="preview" aria-label="режим превью">
+									Превью
+								</ToggleButton>
+							</ToggleButtonGroup>
+						</Box>
+
+						{/* Контент в зависимости от режима */}
+						{viewMode === 'markdown' ? (
+							<Box
+								sx={{
+									whiteSpace: 'pre-wrap',
+									fontFamily: 'monospace',
+									backgroundColor: 'action.hover',
+									padding: 3,
+									borderRadius: 2,
+									border: '1px solid',
+									borderColor: 'divider',
+									mb: 4,
+								}}
+							>
+								<Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+									Исходный Markdown:
+								</Typography>
+								{data.text}
+							</Box>
+						) : (
+							<ReactMarkdown
+								rehypePlugins={[rehypeRaw]}
+								components={{
+									code({ node, inline, className, children, ...props }) {
+										const match = /language-(\w+)/.exec(className || '');
+										return !inline && match ? (
+											<CodeBlock
+												language={match[1]}
+												value={String(children).replace(/\n$/, '')}
+												{...props}
+											/>
+										) : (
+											<code className={className} {...props}>
+												{children}
+											</code>
+										);
+									},
+								}}
+							>
+								{data.text}
+							</ReactMarkdown>
+						)}
 
 						{/* Сортировка комментариев */}
-						<Box sx={{ mb: 3, display: 'flex', alignItems: 'baseline', gap: 2, borderBottom: 1, borderColor: 'divider' }}>
+						<Box sx={{ mt: 4, display: 'flex', alignItems: 'baseline', gap: 2, borderBottom: 1, borderColor: 'divider' }}>
 							<Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'text.secondary' }}>
 								Сортировка:
 							</Typography>
@@ -231,9 +291,11 @@ export const FullPost = () => {
 								}}
 							>
 								<ToggleButton value="new" aria-label="новые сверху">
+									<BoltIcon sx={{ mr: 1, fontSize: '1rem' }} />
 									Новые
 								</ToggleButton>
 								<ToggleButton value="old" aria-label="старые сверху">
+									<ScheduleIcon sx={{ mr: 1, fontSize: '1rem' }} />
 									Старые
 								</ToggleButton>
 							</ToggleButtonGroup>
@@ -242,14 +304,13 @@ export const FullPost = () => {
 				</Post>
 			</Box>
 
-			<Box sx={{ px: { xs: 2, md: 0 }, mt: 4 }}>
+			<Box sx={{ mt: 4 }}>
 				<CommentsBlock
 					items={comments}
 					isLoading={isCommentsLoading}
 				>
 					<Index postId={id} />
 				</CommentsBlock>
-
 			</Box>
 
 			<div
@@ -282,6 +343,6 @@ export const FullPost = () => {
 					{snackbar.message}
 				</Alert>
 			</Snackbar>
-		</>
+		</Container>
 	);
 };

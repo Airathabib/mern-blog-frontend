@@ -1,4 +1,3 @@
-// src/contexts/ThemeContext.js
 import React, { createContext, useContext, useEffect, useState } from 'react';
 const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 const ThemeContext = createContext();

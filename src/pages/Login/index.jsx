@@ -30,12 +30,11 @@ export const Login = () => {
 
 	const onSubmit = async (values) => {
 		try {
-			const result = await dispatch(fetchAuth(values)).unwrap(); // ← .unwrap() выбросит ошибку, если экшен rejected
+			const result = await dispatch(fetchAuth(values)).unwrap();
 			if ('token' in result) {
 				window.localStorage.setItem('token', result.token);
 			}
 		} catch (error) {
-			// Показываем сообщение об ошибке
 			showSnackbar(
 				typeof error === 'string' ? error : 'Не удалось авторизоваться!',
 				'error'

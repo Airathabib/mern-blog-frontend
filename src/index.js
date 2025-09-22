@@ -14,7 +14,6 @@ import "./index.scss";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
-// Оборачиваем App, чтобы получить доступ к теме
 
 function AppWithTheme() {
 	const { darkMode } = useThemeContext();
@@ -22,7 +21,7 @@ function AppWithTheme() {
 
 	return (
 		<MuiThemeProvider theme={theme}>
-			<CssBaseline /> {/* ✅ ПЕРЕМЕСТИЛИ СЮДА — теперь знает о теме */}
+			<CssBaseline /> 
 			<App />
 		</MuiThemeProvider>
 	);
@@ -31,7 +30,7 @@ function AppWithTheme() {
 
 root.render(
 	<React.Fragment>
-		<ThemeProviderWrapper> {/* ✅ Оборачиваем ВСЁ */}
+		<ThemeProviderWrapper> 
 			<BrowserRouter>
 				<Provider store={store}>
 					<AppWithTheme />

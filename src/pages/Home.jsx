@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Grid from '@mui/material/Grid';
@@ -21,27 +21,57 @@ export const Home = () => {
 	const { items: comments, status: commentsStatus } = useSelector((state) => state.comments);
 
 	const [showAllTags, setShowAllTags] = useState(false);
-	;
-
-	const [activeTab, setActiveTab] = useState(0)
-	const { tagName } = useParams()
+	const [activeTab, setActiveTab] = useState(0);
+	const [tagSort, setTagSort] = useState(() => {
+		return localStorage.getItem('tagSort') || 'new';
+	});
+	const { tagName } = useParams();
 	const isPostLoading = posts.status === 'loading';
 	const isTagsLoading = tags.status === 'loading';
 	const isCommentsLoading = commentsStatus === 'loading';
 
-	const tagsToShow = showAllTags ? tags.items : tags.items.slice(0, 10)
+	const tagsItems = tags.items || [];
+
+	const tagsToShow = useMemo(() => {
+		return showAllTags ? tagsItems : tagsItems.slice(0, 5); 
+	}, [tagsItems, showAllTags]);
+
 
 	useEffect(() => {
 		dispatch(fetchComments({}));
 	}, [dispatch]);
 
 	useEffect(() => {
+		localStorage.setItem('tagSort', tagSort);
+	}, [tagSort]);
+
+	useEffect(() => {
 		const sortParam = activeTab === 0 ? 'new' : 'popular';
-		dispatch(fetchTags(sortParam)); // ← загружаем теги в зависимости от сортировки
 		dispatch(fetchPosts({ sort: sortParam, tag: tagName || null }));
-	}, [dispatch, activeTab, tagName]);
+	}, [dispatch, activeTab, tagName]); 
 
+	// Эффект для загрузки тегов — только при смене сортировки тегов
+	useEffect(() => {
+		dispatch(fetchTags(tagSort));
+	}, [dispatch, tagSort]); //
 
+	// Обработчик смены сортировки тегов
+	const handleTagSortChange = (event, newSort) => {
+		event.stopPropagation();
+		if (newSort !== null) {
+			setTagSort(newSort);
+			dispatch(fetchTags(newSort)); // ← перезагружаем теги
+		}
+	};
+
+	const handleShowLess = () => {
+		setShowAllTags(false);
+	};
+
+	const handleResetPosts = () => {
+		// Возвращаем все посты — без фильтра по тегу
+		dispatch(fetchPosts({ sort: activeTab === 0 ? 'new' : 'popular', tag: null }));
+	};
 
 	return (
 		<>
@@ -55,9 +85,10 @@ export const Home = () => {
 					scrollButtons="auto"
 					sx={{
 						'& .MuiTabs-indicator': {
-							display: 'none', // ← убираем стандартную полоску
+							display: 'none',
 						},
 						'& .MuiTab-root': {
+							marginBottom: '14px',
 							border: '1px solid',
 							borderColor: 'divider',
 							borderRadius: '8px',
@@ -160,7 +191,11 @@ export const Home = () => {
 							items={tagsToShow}
 							isLoading={isTagsLoading}
 							onShowAll={() => setShowAllTags(true)}
+							onShowLess={handleShowLess}
 							showAll={showAllTags}
+							onSortChange={handleTagSortChange}
+							currentSort={tagSort}
+							onResetPosts={handleResetPosts} 
 						/>
 						<CommentsBlock
 							items={comments.slice(0, 5)}

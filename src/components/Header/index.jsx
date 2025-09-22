@@ -19,9 +19,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout, selectIsAuth } from '../../redux/slices/auth';
 import { ToggleThemeButton } from '../ToggleThemeButtomn';
 import { ConfirmDialog } from '../confirmDialog';
-import styles from './Header.module.scss';
-
-
 
 export const Header = () => {
 	const dispatch = useDispatch()

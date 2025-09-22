@@ -10,14 +10,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { SideBlock } from "./SideBlock";
-import ListItem from "@mui/material/ListItem";
 import ReplyIcon from '@mui/icons-material/Reply';
 import { Typography, Box, Paper } from "@mui/material";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
 import Avatar from "@mui/material/Avatar";
-import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
-import List from "@mui/material/List";
 import Skeleton from "@mui/material/Skeleton";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
@@ -187,7 +183,7 @@ export const CommentsBlock = ({ items, children, isLoading = true, isCompact = f
 						border: '1px solid',
 						borderColor: 'divider',
 						backgroundColor: highlightedCommentId === comment._id
-							? '#0a1fe633' 
+							? '#0a1fe633'
 							: 'background.paper',
 						transition: 'background-color 0.5s ease', // ← плавный переход
 					}}

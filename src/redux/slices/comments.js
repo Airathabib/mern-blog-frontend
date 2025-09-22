@@ -30,7 +30,7 @@ export const fetchComments = createAsyncThunk(
 				...data,
 				postId,
 				page,
-				sort, // ← сохраняем для редьюсера
+				sort,
 			};
 		} catch (err) {
 			return rejectWithValue(err.response?.data?.message || 'Ошибка загрузки');
@@ -192,8 +192,8 @@ const commentsSlice = createSlice({
 				const { commentId, likes, dislikes, userAction } = action.payload;
 				const comment = state.items.find(c => c._id === commentId);
 				if (comment) {
-					comment.likesCount = likes;      // ← число
-					comment.dislikesCount = dislikes; // ← число
+					comment.likesCount = likes;      
+					comment.dislikesCount = dislikes; 
 					comment.userAction = userAction;
 				}
 			})
@@ -210,6 +210,5 @@ const commentsSlice = createSlice({
 });
 
 export const { clearComments } = commentsSlice.actions;
-
 
 export const commentsReducer = commentsSlice.reducer;

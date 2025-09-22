@@ -7,13 +7,12 @@ import { useSelector } from 'react-redux';
 import { selectIsAuth } from '../../redux/slices/auth';
 import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import MDEditor from '@uiw/react-md-editor';
-import { useState as useMdState } from '@uiw/react-md-editor';
-import { commands } from '@uiw/react-md-editor'; // ← стандартные команды
-import ImageIcon from '@mui/icons-material/Image'; // ← иконка/ ← стандартные команды
+import { commands } from '@uiw/react-md-editor';
+import ImageIcon from '@mui/icons-material/Image';
 import axios from '../../axios';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
-import { useThemeContext } from '../../contexts/ThemeContext'; // ← добавь путь к твоему ThemeContext
+import { useThemeContext } from '../../contexts/ThemeContext';
 import styles from './AddPost.module.scss';
 
 export const AddPost = () => {
@@ -65,7 +64,7 @@ export const AddPost = () => {
 
 			const fields = {
 				title,
-				tags, // ← массив!
+				tags,
 				imageUrl,
 				text,
 			};
@@ -132,12 +131,11 @@ export const AddPost = () => {
 		name: 'image-upload',
 		keyCommand: 'imageUpload',
 		buttonProps: { 'aria-label': 'Вставить изображение' },
-		icon: () => <ImageIcon fontSize="small" />,
+		icon: <ImageIcon fontSize="small" />,
 		execute: () => {
-			inputFieleRef.current?.click(); // ← открываем файловый input
+			inputFieleRef.current?.click();
 		},
 	};
-
 	const uploadImage = async (file) => {
 		try {
 			const formData = new FormData();
@@ -151,7 +149,7 @@ export const AddPost = () => {
 				},
 			});
 
-			// Вставляем Markdown-ссылку на изображение в редактор
+
 			const imageUrl = `http://localhost:4444${data.url}`;
 			const markdownImage = `![${file.name}](${imageUrl})\n`;
 			setText(prev => prev + markdownImage);
@@ -161,37 +159,36 @@ export const AddPost = () => {
 		}
 	};
 
-
-
 	if (!window.localStorage.getItem('token') && !isAuth) {
 		return <Navigate to="/" />;
 	}
 
 	return (
 		<Paper sx={{ p: 4 }}>
-			<Button
-				onClick={() => inputFieleRef.current.click()}
-				variant="outlined"
-				size="large"
-				sx={{ mb: 3 }}
-			>
-				Загрузить превью
-			</Button>
+			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+				<Button
+					onClick={() => inputFieleRef.current.click()}
+					variant="outlined"
+					size="large"
+				>
+					Загрузить превью
+				</Button>
 
-			<input
-				type="file"
-				ref={inputFieleRef}
-				onChange={handleChangeFile}
-				hidden
-			/>
-			{imageUrl && (
-				<>
-					<Button variant="contained" color="error" onClick={onClickRemoveImage} sx={{ mb: 2 }}>
-						Удалить
-					</Button>
-					<img className={styles.image} src={`http://localhost:4444${imageUrl}`} alt="Uploaded" />
-				</>
-			)}
+				<input
+					type="file"
+					ref={inputFieleRef}
+					onChange={handleChangeFile}
+					hidden
+				/>
+				{imageUrl && (
+					<>
+						<Button variant="contained" color="error" onClick={onClickRemoveImage} >
+							Удалить
+						</Button>
+						<img className={styles.image} src={`http://localhost:4444${imageUrl}`} alt="Uploaded" />
+					</>
+				)}
+			</Box>
 
 			<TextField
 				label="Заголовок статьи"
@@ -226,8 +223,6 @@ export const AddPost = () => {
 					Превью
 				</Button>
 			</Box>
-
-			{/* Новый редактор */}
 			<MDEditor
 				value={text}
 				onChange={setText}
@@ -250,7 +245,7 @@ export const AddPost = () => {
 					commands.strikethrough,
 					commands.divider,
 					commands.link,
-					imageUploadCommand, // ← наша кастомная кнопка
+					imageUploadCommand,
 					commands.divider,
 					commands.quote,
 					commands.code,
