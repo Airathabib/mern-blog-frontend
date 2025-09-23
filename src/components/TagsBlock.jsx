@@ -57,17 +57,19 @@ export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, o
 			<Box
 				sx={{
 					display: 'flex',
-					flexWrap: 'wrap',
-					gap: 1,
+					flexWrap: 'wrap', // ← Ключевое свойство!
+					gap: 0.5, // ← Отступы между тегами
 					justifyContent: 'flex-start',
 					width: '100%',
+					padding: 0,
+					margin: 0,
 				}}
 			>
 				<List
 					sx={{
 						display: 'flex',
-						flexWrap: 'wrap',
-						gap: 1,
+						flexWrap: 'wrap', // ← Дублируем для надёжности
+						gap: 0.5,
 						padding: 0,
 						margin: 0,
 						width: '100%',
