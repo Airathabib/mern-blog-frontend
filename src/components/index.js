@@ -1,4 +1,4 @@
-export * from "./TagsBlock/TagsBlock.jsx";
+export * from "./TagsBlock.jsx";
 export * from "./CommentsBlock";
 export * from "./confirmDialog.jsx"
 export * from "./Post";

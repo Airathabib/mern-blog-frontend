@@ -10,12 +10,31 @@ export const TagItem = ({ tag }) => {
 				component={RouterLink}
 				to={`/tags/${encodeURIComponent(tag.name)}`}
 				sx={{
+					// Разрешаем перенос текста
+					whiteSpace: 'normal',
+					wordBreak: 'break-word', // Ломаем длинные слова
+					// Убираем фиксированную ширину, разрешаем растягиваться по контенту
+					width: 'auto',
+					// Добавляем максимальную ширину, чтобы не вылезать за контейнер
+					maxWidth: '100%',
+					// Добавляем отступы по бокам на мобильных
+					paddingX: { xs: 1, sm: 2 },
+					// Вертикальные отступы для лучшего переноса
+					marginY: 0.5,
 					'&:active': {
 						backgroundColor: 'action.selected',
 					},
+					// На мобильных — уменьшаем шрифт
+					'& .MuiListItemText-primary': {
+						fontSize: { xs: '0.875rem', sm: '1rem' },
+					},
 				}}
 			>
-				<ListItemIcon>
+				<ListItemIcon
+					sx={{
+						minWidth: { xs: 36, sm: 48 }, // Уменьшаем иконку на мобильных
+					}}
+				>
 					<TagIcon sx={{ color: 'primary.main' }} />
 				</ListItemIcon>
 				<ListItemText
@@ -24,6 +43,9 @@ export const TagItem = ({ tag }) => {
 						sx: {
 							color: 'primary.main',
 							fontWeight: 'bold',
+							// Убираем перенос для иконки + текста — теперь переносится весь ListItemButton
+							whiteSpace: 'normal',
+							wordBreak: 'break-word',
 						},
 					}}
 				/>

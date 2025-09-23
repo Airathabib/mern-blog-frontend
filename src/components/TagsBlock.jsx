@@ -1,9 +1,9 @@
 import React from "react";
 import List from "@mui/material/List";
-import { Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
-import { SideBlock } from "../SideBlock";
-import { TagItem } from '../TagItem';
-import './TagsBlock.scss';
+import { Box, Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { SideBlock } from "./SideBlock";
+import { TagItem } from './TagItem';
+
 
 export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, onSortChange, currentSort, onShowLess }) => {
 	return (
@@ -54,14 +54,31 @@ export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, o
 				</ToggleButton>
 			</ToggleButtonGroup>
 
-			<List>
-				{(isLoading ? Array(5).fill({ name: '' }) : items).map((tag, i) => (
-					<TagItem
-						key={i}
-						tag={tag}
-					/>
-				))}
-			</List>
+			<Box
+				sx={{
+					display: 'flex',
+					flexWrap: 'wrap',
+					gap: 1, // ← современный способ задать отступы
+					justifyContent: 'flex-start',
+					width: '100%',
+				}}
+			>
+				<List
+					sx={{
+						display: 'flex',
+						flexWrap: 'wrap',
+						gap: 1,
+						padding: 0,
+						margin: 0,
+						width: '100%',
+						listStyle: 'none',
+					}}
+				>
+					{(isLoading ? Array(5).fill({ name: '' }) : items).map((tag, i) => (
+						<TagItem key={i} tag={tag} />
+					))}
+				</List>
+			</Box>
 
 			{!showAll && items.length >= 5 && (
 				<Button
