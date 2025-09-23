@@ -26,7 +26,10 @@ export const fetchTags = createAsyncThunk('posts/fetchTags', async (sort = 'new'
 	}
 });
 
-export const fetchRemovePost = createAsyncThunk('posts/fetchRemovePost', async (id) => await axios.delete(`/posts/${id}`));
+export const fetchRemovePost = createAsyncThunk('posts/fetchRemovePost', async (id) => {
+	const response = await axios.delete(`/posts/${id}`);
+	return response.data; // ← Возвращаем ТОЛЬКО данные
+});
 
 const initialState = {
 	posts: {
@@ -71,10 +74,14 @@ const postsSlice = createSlice({
 			state.tags.status = 'error';
 		},
 		// Удаление статьи
-		[fetchRemovePost.pending]: (state, action) => {
-			state.posts.items = state.posts.items.filter(obj => obj._id !== action.meta.arg)
+		[fetchRemovePost.pending]: (state) => {
+			state.posts.status = 'loading';
 		},
-
+		[fetchRemovePost.fulfilled]: (state, action) => {
+			const idToRemove = action.meta.arg;
+			state.posts.items = state.posts.items.filter(post => post._id !== idToRemove);
+			state.posts.status = 'loaded';
+		},
 		[fetchRemovePost.rejected]: (state) => {
 			state.posts.status = 'error';
 		},
