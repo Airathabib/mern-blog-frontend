@@ -308,6 +308,7 @@ export const FullPost = () => {
 				<CommentsBlock
 					items={comments}
 					isLoading={isCommentsLoading}
+					isReadOnly={false}
 				>
 					<Index postId={id} />
 				</CommentsBlock>

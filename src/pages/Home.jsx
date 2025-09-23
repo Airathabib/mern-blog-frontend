@@ -22,9 +22,7 @@ export const Home = () => {
 
 	const [showAllTags, setShowAllTags] = useState(false);
 	const [activeTab, setActiveTab] = useState(0);
-	const [tagSort, setTagSort] = useState(() => {
-		return localStorage.getItem('tagSort') || 'new';
-	});
+	const [tagSort, setTagSort] = useState(() => localStorage.getItem('tagSort') || 'new');
 	const { tagName } = useParams();
 	const isPostLoading = posts.status === 'loading';
 	const isTagsLoading = tags.status === 'loading';
@@ -33,7 +31,7 @@ export const Home = () => {
 	const tagsItems = tags.items || [];
 
 	const tagsToShow = useMemo(() => {
-		return showAllTags ? tagsItems : tagsItems.slice(0, 5); 
+		return showAllTags ? tagsItems : tagsItems.slice(0, 5);
 	}, [tagsItems, showAllTags]);
 
 
@@ -48,7 +46,7 @@ export const Home = () => {
 	useEffect(() => {
 		const sortParam = activeTab === 0 ? 'new' : 'popular';
 		dispatch(fetchPosts({ sort: sortParam, tag: tagName || null }));
-	}, [dispatch, activeTab, tagName]); 
+	}, [dispatch, activeTab, tagName]);
 
 	// Эффект для загрузки тегов — только при смене сортировки тегов
 	useEffect(() => {
@@ -57,7 +55,6 @@ export const Home = () => {
 
 	// Обработчик смены сортировки тегов
 	const handleTagSortChange = (event, newSort) => {
-		event.stopPropagation();
 		if (newSort !== null) {
 			setTagSort(newSort);
 			dispatch(fetchTags(newSort)); // ← перезагружаем теги
@@ -66,11 +63,6 @@ export const Home = () => {
 
 	const handleShowLess = () => {
 		setShowAllTags(false);
-	};
-
-	const handleResetPosts = () => {
-		// Возвращаем все посты — без фильтра по тегу
-		dispatch(fetchPosts({ sort: activeTab === 0 ? 'new' : 'popular', tag: null }));
 	};
 
 	return (
@@ -195,12 +187,12 @@ export const Home = () => {
 							showAll={showAllTags}
 							onSortChange={handleTagSortChange}
 							currentSort={tagSort}
-							onResetPosts={handleResetPosts} 
 						/>
 						<CommentsBlock
 							items={comments.slice(0, 5)}
 							isLoading={isCommentsLoading}
 							isCompact={true}
+							isReadOnly={true}
 						/>
 					</Grid>
 				</Grid>

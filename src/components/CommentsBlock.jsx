@@ -20,7 +20,7 @@ import Alert from "@mui/material/Alert";
 import { ConfirmDialog } from "./confirmDialog";
 
 
-export const CommentsBlock = ({ items, children, isLoading = true, isCompact = false }) => {
+export const CommentsBlock = ({ items, children, isLoading = true, isCompact = false, isReadOnly = false }) => {
 	const dispatch = useDispatch();
 	const userData = useSelector(selectUserData);
 	const [editingId, setEditingId] = useState(null);
@@ -33,6 +33,7 @@ export const CommentsBlock = ({ items, children, isLoading = true, isCompact = f
 	const [highlightedCommentId, setHighlightedCommentId] = useState(null);
 
 	const textFieldRef = useRef();
+	const highlightTimeoutRef = useRef(null);
 
 	useEffect(() => {
 		if (editingId && textFieldRef.current) {
@@ -112,18 +113,31 @@ export const CommentsBlock = ({ items, children, isLoading = true, isCompact = f
 	};
 
 	const handleReply = (commentId) => {
+		// Очищаем предыдущий таймер, если есть
+		if (highlightTimeoutRef.current) {
+			clearTimeout(highlightTimeoutRef.current);
+		}
+
 		setReplyingTo(commentId);
 		setReplyText('');
 		setHighlightedCommentId(commentId);
 	};
 
+
 	const handleCancelReply = () => {
 		setReplyingTo(null);
 		setReplyText('');
 
-		setTimeout(() => {
-			setHighlightedCommentId(null)
-		}, 3000)
+		// Очищаем предыдущий таймер, если есть
+		if (highlightTimeoutRef.current) {
+			clearTimeout(highlightTimeoutRef.current);
+		}
+
+		// Устанавливаем новый таймер и сохраняем его в ref
+		highlightTimeoutRef.current = setTimeout(() => {
+			setHighlightedCommentId(null);
+			highlightTimeoutRef.current = null; // ← очищаем ref после выполнения
+		}, 3000);
 	};
 
 
@@ -136,6 +150,11 @@ export const CommentsBlock = ({ items, children, isLoading = true, isCompact = f
 			showSnackbar('Ответ добавлен!', 'success');
 			setReplyingTo(null);
 			setReplyText('');
+			setHighlightedCommentId(null); // ← сбрасываем подсветку
+			if (highlightTimeoutRef.current) {
+				clearTimeout(highlightTimeoutRef.current);
+				highlightTimeoutRef.current = null;
+			}
 		} catch (err) {
 			showSnackbar('Ошибка добавления ответа', 'error');
 		}
@@ -255,89 +274,96 @@ export const CommentsBlock = ({ items, children, isLoading = true, isCompact = f
 					</Box>
 
 					{/* Все кнопки внизу */}
+					{/* Все кнопки внизу */}
 					<Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mt: 2 }}>
-						{/* Кнопки лайков */}
-						<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-							<IconButton
-								size="small"
-								onClick={() => dispatch(likeComment(comment._id))}
-								sx={{
-									color: comment.userAction === 'liked' ? 'primary.main' : 'text.secondary',
-									'&:hover': {
-										backgroundColor: 'action.hover',
-									},
-								}}
-							>
-								<ThumbUpIcon fontSize="small" />
-							</IconButton>
-							<Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-								{comment.likesCount || 0}
-							</Typography>
+						{/* Кнопки лайков — скрываем, если isReadOnly */}
+						{!isReadOnly && (
+							<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+								<IconButton
+									size="small"
+									onClick={() => dispatch(likeComment(comment._id))}
+									sx={{
+										color: comment.userAction === 'liked' ? 'primary.main' : 'text.secondary',
+										'&:hover': {
+											backgroundColor: 'action.hover',
+										},
+									}}
+								>
+									<ThumbUpIcon fontSize="small" />
+								</IconButton>
+								<Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+									{comment.likesCount || 0}
+								</Typography>
 
-							<IconButton
-								size="small"
-								onClick={() => dispatch(dislikeComment(comment._id))}
-								sx={{
-									color: comment.userAction === 'disliked' ? 'error.main' : 'text.secondary',
-									'&:hover': {
-										backgroundColor: 'action.hover',
-									},
-								}}
-							>
-								<ThumbDownIcon fontSize="small" />
-							</IconButton>
-							<Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-								{comment.dislikesCount || 0}
-							</Typography>
-						</Box>
+								<IconButton
+									size="small"
+									onClick={() => dispatch(dislikeComment(comment._id))}
+									sx={{
+										color: comment.userAction === 'disliked' ? 'error.main' : 'text.secondary',
+										'&:hover': {
+											backgroundColor: 'action.hover',
+										},
+									}}
+								>
+									<ThumbDownIcon fontSize="small" />
+								</IconButton>
+								<Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+									{comment.dislikesCount || 0}
+								</Typography>
+							</Box>
+						)}
 
 						{/* Разделитель */}
 						<Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
-						{/* Основные кнопки */}
-						<Button
-							size="small"
-							onClick={() => handleReply(comment._id)}
-							sx={{
-								textTransform: 'none',
-								fontSize: isCompact ? '0.75rem' : '0.875rem',
-								color: 'text.secondary',
-								'&:hover': {
-									backgroundColor: 'action.hover',
-								},
-							}}
-						>
-							Ответить
-						</Button>
-
-						{userData?._id === String(comment.user._id) && (
+						{/* Основные кнопки — скрываем, если isReadOnly */}
+						{!isReadOnly && (
 							<>
-								<IconButton
+								<Button
 									size="small"
-									aria-label="edit"
-									onClick={() => handleEdit(comment)}
+									onClick={() => handleReply(comment._id)}
 									sx={{
-										color: 'primary.main',
+										textTransform: 'none',
+										fontSize: isCompact ? '0.75rem' : '0.875rem',
+										color: 'text.secondary',
 										'&:hover': {
 											backgroundColor: 'action.hover',
 										},
 									}}
 								>
-									<EditIcon fontSize="small" />
-								</IconButton>
-								<IconButton
-									size="small"
-									aria-label="delete"
-									onClick={() => handleDeleteClick(comment._id)}
-									sx={{
-										color: 'error.main',
-										'&:hover': {
-											backgroundColor: 'action.hover',
-										},
-									}}
-								>
-									<DeleteIcon fontSize="small" />
-								</IconButton>
+									Ответить
+								</Button>
+
+								{userData?._id === String(comment.user._id) && (
+									<>
+										<IconButton
+											size="small"
+											aria-label="edit"
+											onClick={() => handleEdit(comment)}
+											sx={{
+												color: 'primary.main',
+												'&:hover': {
+													backgroundColor: 'action.hover',
+												},
+											}}
+										>
+											<EditIcon fontSize="small" />
+										</IconButton>
+										<IconButton
+											size="small"
+											aria-label="delete"
+											onClick={() => handleDeleteClick(comment._id)}
+											sx={{
+												color: 'error.main',
+												'&:hover': {
+													backgroundColor: 'action.hover',
+												},
+											}}
+										>
+											<DeleteIcon fontSize="small" />
+										</IconButton>
+									</>
+								)}
 							</>
 						)}
 					</Box>

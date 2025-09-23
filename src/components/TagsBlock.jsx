@@ -4,7 +4,7 @@ import { Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { SideBlock } from "./SideBlock";
 import { TagItem } from './TagItem';
 
-export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, onSortChange, currentSort, onShowLess, onResetPosts }) => {
+export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, onSortChange, currentSort, onShowLess }) => {
 	return (
 		<SideBlock title="Тэги">
 			{/* Переключатель сортировки */}
@@ -58,7 +58,6 @@ export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, o
 					<TagItem
 						key={i}
 						tag={tag}
-						onMouseLeave={onResetPosts}
 					/>
 				))}
 			</List>
