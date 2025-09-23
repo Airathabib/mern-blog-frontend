@@ -6,7 +6,7 @@ import { Box, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material'; // ← для стилизации через sx
 import { Post } from '../components/Post';
-import { TagsBlock, } from '../components/TagsBlock';
+import { TagsBlock, } from '../components/TagsBlock/TagsBlock';
 import { useParams } from 'react-router-dom';
 import { CommentsBlock } from '../components/CommentsBlock';
 import { useDispatch, useSelector } from 'react-redux';

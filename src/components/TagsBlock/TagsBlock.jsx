@@ -1,8 +1,9 @@
 import React from "react";
 import List from "@mui/material/List";
 import { Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
-import { SideBlock } from "./SideBlock";
-import { TagItem } from './TagItem';
+import { SideBlock } from "../SideBlock";
+import { TagItem } from '../TagItem';
+import './TagsBlock.scss';
 
 export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, onSortChange, currentSort, onShowLess }) => {
 	return (
