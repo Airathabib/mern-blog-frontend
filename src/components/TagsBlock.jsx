@@ -58,7 +58,7 @@ export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, o
 				sx={{
 					display: 'flex',
 					flexWrap: 'wrap',
-					gap: 1, // ← современный способ задать отступы
+					gap: 1,
 					justifyContent: 'flex-start',
 					width: '100%',
 				}}
