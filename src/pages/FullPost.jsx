@@ -15,13 +15,11 @@ import Alert from '@mui/material/Alert';
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from 'rehype-raw';
 
-
-
 export const FullPost = () => {
 	const dispatch = useDispatch();
 	const [data, setData] = useState();
-	const [isLoading, setIsLoading] = useState(true)
-	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false); // ← флаг загрузки
+	const [isLoading, setIsLoading] = useState(true);
+	const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 	const [sort, setSort] = useState(() => localStorage.getItem('commentSort') || 'new');
 	const [viewMode, setViewMode] = useState(() => localStorage.getItem('postViewMode') || 'preview');
 	const { items: comments, status: commentsStatus, pagination } = useSelector(state => state.comments);
@@ -30,7 +28,6 @@ export const FullPost = () => {
 	const { id } = useParams();
 	const observer = useRef();
 	const loadMoreTimer = useRef(null);
-
 	const isCommentsLoading = commentsStatus === 'loading';
 
 	useEffect(() => {
@@ -38,7 +35,7 @@ export const FullPost = () => {
 	}, [sort]);
 
 	useEffect(() => {
-		localStorage.setItem('postViewMode', viewMode); // ← сохраняем выбор режима
+		localStorage.setItem('postViewMode', viewMode);
 	}, [viewMode]);
 
 	// Загрузка поста
@@ -57,13 +54,12 @@ export const FullPost = () => {
 	// Загрузка первой страницы комментариев
 	useEffect(() => {
 		if (id) {
-			dispatch(clearComments())
+			dispatch(clearComments());
 			dispatch(fetchComments({ postId: id, page: 1, sort }));
 		}
 	}, [dispatch, id, sort]);
 
-
-	// Infinite scroll с debounce
+	// Infinite scroll
 	useEffect(() => {
 		if (!pagination || isCommentsLoading || isFetchingNextPage) return;
 
@@ -79,7 +75,7 @@ export const FullPost = () => {
 							setIsFetchingNextPage(false);
 						});
 				}
-			}, 300); // ← задержка 300ms
+			}, 300);
 		};
 
 		const sentinel = document.querySelector('#scroll-sentinel');
@@ -124,8 +120,8 @@ export const FullPost = () => {
 	const actualCommentsCount = comments.length || 0;
 
 	return (
-		<Container maxWidth="lg">
-			<Box sx={{ mt: 4 }}>
+		<Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 } }}> {/* ← меньше отступы на 320px */}
+			<Box sx={{ mt: { xs: 2, md: 4 } }}>
 				<Post
 					id={data._id}
 					title={data.title}
@@ -143,28 +139,42 @@ export const FullPost = () => {
 							color: 'text.primary',
 							'& h1, & h2, & h3, & h4, & h5, & h6': {
 								color: 'text.primary',
-								mt: 2,
+								mt: { xs: 1.5, sm: 2 },
 								textAlign: 'left',
+								fontSize: {
+									xs: '1.25rem',   // ← 320px
+									sm: '1.5rem',    // ← 375px
+									md: '2rem',      // ← 430px+
+								},
 							},
 							'& p': {
-								mb: 1,
+								mb: { xs: 0.5, sm: 1 },
+								fontSize: {
+									xs: '0.875rem',  // ← 320px
+									sm: '1rem',      // ← 375px
+								},
 								textAlign: 'left',
+								lineHeight: 1.6,
 							},
 							'& a': {
 								color: 'primary.main',
 								textDecoration: 'underline',
 							},
 							'& ul, & ol': {
-								ml: 2,
-								mb: 2,
+								ml: { xs: 1, sm: 2 },
+								mb: { xs: 1, sm: 2 },
+								fontSize: {
+									xs: '0.875rem',
+									sm: '1rem',
+								},
 							},
 							'& li': {
-								mb: 0.5,
+								mb: { xs: 0.25, sm: 0.5 },
 							},
 						}}
 					>
 						{/* Переключатель режимов */}
-						<Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+						<Box sx={{ mb: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center' }}>
 							<ToggleButtonGroup
 								value={viewMode}
 								exclusive
@@ -175,9 +185,16 @@ export const FullPost = () => {
 										border: '1px solid',
 										borderColor: 'divider',
 										borderRadius: '8px',
-										padding: '8px 16px',
+										padding: {
+											xs: '4px 8px',   // ← 320px
+											sm: '6px 12px',  // ← 375px
+											md: '8px 16px',  // ← 430px+
+										},
 										fontWeight: 500,
-										fontSize: '0.875rem',
+										fontSize: {
+											xs: '0.75rem',   // ← 320px
+											sm: '0.875rem',  // ← 375px
+										},
 										textTransform: 'none',
 										color: 'text.primary',
 										backgroundColor: 'background.paper',
@@ -208,21 +225,26 @@ export const FullPost = () => {
 							</ToggleButtonGroup>
 						</Box>
 
-						{/* Контент в зависимости от режима */}
+						{/* Контент */}
 						{viewMode === 'markdown' ? (
 							<Box
 								sx={{
 									whiteSpace: 'pre-wrap',
 									fontFamily: 'monospace',
 									backgroundColor: 'action.hover',
-									padding: 3,
-									borderRadius: 2,
+									padding: { xs: 2, sm: 3 },
+									borderRadius: { xs: 1, sm: 2 },
 									border: '1px solid',
 									borderColor: 'divider',
-									mb: 4,
+									mb: { xs: 3, sm: 4 },
+									fontSize: {
+										xs: '0.875rem',
+										sm: '1rem',
+									},
+									overflowX: 'auto',
 								}}
 							>
-								<Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+								<Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontSize: 'inherit' }}>
 									Исходный Markdown:
 								</Typography>
 								{data.text}
@@ -238,13 +260,38 @@ export const FullPost = () => {
 												language={match[1]}
 												value={String(children).replace(/\n$/, '')}
 												{...props}
+												sx={{
+													fontSize: {
+														xs: '0.875rem',
+														sm: '1rem',
+													},
+													padding: {
+														xs: '8px',
+														sm: '12px',
+													},
+												}}
 											/>
 										) : (
-											<code className={className} {...props}>
+											<code className={className} {...props} style={{ fontSize: '0.875rem' }}>
 												{children}
 											</code>
 										);
 									},
+									p: ({ children }) => (
+										<Typography
+											component="p"
+											sx={{
+												mb: { xs: 0.5, sm: 1 },
+												fontSize: {
+													xs: '0.875rem',
+													sm: '1rem',
+												},
+												lineHeight: 1.6,
+											}}
+										>
+											{children}
+										</Typography>
+									),
 								}}
 							>
 								{data.text}
@@ -252,8 +299,8 @@ export const FullPost = () => {
 						)}
 
 						{/* Сортировка комментариев */}
-						<Box sx={{ mt: 4, display: 'flex', alignItems: 'baseline', gap: 2, borderBottom: 1, borderColor: 'divider' }}>
-							<Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'text.secondary' }}>
+						<Box sx={{ mt: { xs: 3, sm: 4 }, display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
+							<Typography variant="subtitle1" sx={{ fontWeight: 500, color: 'text.secondary', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
 								Сортировка:
 							</Typography>
 							<ToggleButtonGroup
@@ -266,9 +313,15 @@ export const FullPost = () => {
 										border: '1px solid',
 										borderColor: 'divider',
 										borderRadius: '8px',
-										padding: '6px 16px',
+										padding: {
+											xs: '4px 8px',
+											sm: '6px 12px',
+										},
 										fontWeight: 500,
-										fontSize: '0.875rem',
+										fontSize: {
+											xs: '0.75rem',
+											sm: '0.875rem',
+										},
 										textTransform: 'none',
 										color: 'text.primary',
 										backgroundColor: 'background.paper',
@@ -291,11 +344,11 @@ export const FullPost = () => {
 								}}
 							>
 								<ToggleButton value="new" aria-label="новые сверху">
-									<BoltIcon sx={{ mr: 1, fontSize: '1rem' }} />
+									<BoltIcon sx={{ mr: { xs: 0.5, sm: 1 }, fontSize: '0.875rem' }} />
 									Новые
 								</ToggleButton>
 								<ToggleButton value="old" aria-label="старые сверху">
-									<ScheduleIcon sx={{ mr: 1, fontSize: '1rem' }} />
+									<ScheduleIcon sx={{ mr: { xs: 0.5, sm: 1 }, fontSize: '0.875rem' }} />
 									Старые
 								</ToggleButton>
 							</ToggleButtonGroup>
@@ -304,7 +357,7 @@ export const FullPost = () => {
 				</Post>
 			</Box>
 
-			<Box sx={{ mt: 4 }}>
+			<Box sx={{ mt: { xs: 3, sm: 4 } }}>
 				<CommentsBlock
 					items={comments}
 					isLoading={isCommentsLoading}
@@ -314,20 +367,12 @@ export const FullPost = () => {
 				</CommentsBlock>
 			</Box>
 
-			<div
-				id="scroll-sentinel"
-				style={{
-					height: '1px',
-					width: '100%',
-					background: 'transparent',
-					margin: '0 auto',
-				}}
-			/>
+			<div id="scroll-sentinel" style={{ height: '1px', width: '100%', background: 'transparent', margin: '0 auto' }} />
 
 			{isFetchingNextPage && (
-				<div style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
+				<Box sx={{ textAlign: 'center', py: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
 					Загрузка...
-				</div>
+				</Box>
 			)}
 
 			<Snackbar
@@ -336,11 +381,7 @@ export const FullPost = () => {
 				onClose={handleCloseSnackbar}
 				anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
 			>
-				<Alert
-					onClose={handleCloseSnackbar}
-					severity={snackbar.severity}
-					sx={{ width: '100%' }}
-				>
+				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
 					{snackbar.message}
 				</Alert>
 			</Snackbar>

@@ -57,8 +57,13 @@ export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, o
 			<Box
 				sx={{
 					display: 'flex',
-					flexWrap: 'wrap', // ← Ключевое свойство!
-					gap: 0.5, // ← Отступы между тегами
+					flexWrap: 'wrap',
+					gap: {
+						xs: 0.5,    // ← 320px
+						sm: 1,      // ← 768px
+						md: 1.5,    // ← 1024px
+						lg: 2,      // ← 1280px+
+					},
 					justifyContent: 'flex-start',
 					width: '100%',
 					padding: 0,
@@ -68,8 +73,13 @@ export const TagsBlock = ({ items = [], isLoading = false, onShowAll, showAll, o
 				<List
 					sx={{
 						display: 'flex',
-						flexWrap: 'wrap', // ← Дублируем для надёжности
-						gap: 0.5,
+						flexWrap: 'wrap',
+						gap: {
+							xs: 0.5,
+							sm: 1,
+							md: 1.5,
+							lg: 2,
+						},
 						padding: 0,
 						margin: 0,
 						width: '100%',

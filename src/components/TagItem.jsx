@@ -8,9 +8,9 @@ export const TagItem = ({ tag }) => {
 		<ListItem
 			disablePadding
 			sx={{
-				width: '100%', // ← Важно: элемент занимает всю ширину
+				width: '100%',
 				display: 'flex',
-				flexWrap: 'wrap', // ← Разрешаем перенос содержимого
+				flexWrap: 'wrap',
 			}}
 		>
 			<ListItemButton
@@ -20,34 +20,53 @@ export const TagItem = ({ tag }) => {
 					width: '100%',
 					display: 'flex',
 					alignItems: 'center',
-					flexWrap: 'wrap', // ← Ключевое свойство!
-					gap: 0.5, // ← Меньше отступов на мобильных
-					padding: { xs: '6px 8px', sm: '8px 12px' }, // ← Уменьшаем отступы
-					borderRadius: '16px',
+					flexWrap: 'wrap',
+					gap: { xs: 0.5, sm: 1, md: 1.5 },
+					padding: {
+						xs: '6px 10px',    // ← 320px
+						sm: '8px 14px',    // ← 768px
+						md: '10px 18px',   // ← 1024px
+						lg: '12px 22px',   // ← 1280px+
+					},
+					borderRadius: {
+						xs: '12px',
+						sm: '16px',
+						md: '20px',
+					},
 					backgroundColor: 'background.paper',
 					boxShadow: 1,
-					transition: 'all 0.2s ease',
+					transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
 					'&:hover': {
 						backgroundColor: 'action.hover',
-						boxShadow: 2,
+						boxShadow: 3,
+						transform: 'translateY(-1px)',
 					},
 					'&:active': {
 						backgroundColor: 'action.selected',
-					},
-					// На очень маленьких экранах
-					'@media (max-width: 375px)': {
-						padding: '4px 6px',
-						fontSize: '0.8125rem',
+						transform: 'translateY(0)',
 					},
 				}}
 			>
 				<ListItemIcon
 					sx={{
-						minWidth: { xs: 28, sm: 36 },
+						minWidth: {
+							xs: 24,
+							sm: 28,
+							md: 32,
+							lg: 36,
+						},
 						margin: 0,
 					}}
 				>
-					<TagIcon sx={{ color: 'primary.main', fontSize: { xs: '1rem', sm: '1.25rem' } }} />
+					<TagIcon sx={{
+						color: 'primary.main',
+						fontSize: {
+							xs: '1rem',
+							sm: '1.1rem',
+							md: '1.25rem',
+							lg: '1.4rem',
+						},
+					}} />
 				</ListItemIcon>
 				<ListItemText
 					primary={tag.name}
@@ -55,13 +74,19 @@ export const TagItem = ({ tag }) => {
 						sx: {
 							color: 'primary.main',
 							fontWeight: 'bold',
-							fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-							whiteSpace: 'normal', // ← Разрешаем перенос текста
-							wordBreak: 'break-word', // ← Ломаем длинные слова
-							flex: '1 1 auto', // ← Занимает оставшееся пространство
-							minWidth: 0, // ← Позволяет тексту сжиматься
-							overflow: 'hidden', // ← Скрываем переполнение
-							textOverflow: 'ellipsis', // ← Точки, если текст слишком длинный
+							fontSize: {
+								xs: '0.875rem',    // ← 14px на 320px
+								sm: '0.95rem',     // ← 15px на 768px
+								md: '1.05rem',     // ← 17px на 1024px
+								lg: '1.15rem',     // ← 18px на 1280px+
+							},
+							lineHeight: 1.4,
+							whiteSpace: 'normal',
+							wordBreak: 'break-all',
+							flex: '1 1 auto',
+							minWidth: 0,
+							overflowWrap: 'break-word',
+							textAlign: 'left',
 						},
 					}}
 				/>

@@ -78,6 +78,7 @@ img {
 
 .tags {
   display: flex;
+  flex-wrap: wrap;
   list-style: none;
   padding: 0;
   margin: 5px 0 0 0;

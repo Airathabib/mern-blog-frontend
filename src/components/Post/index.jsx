@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
-import { Typography } from '@mui/material'
+import { Typography, Box } from '@mui/material';
 import CommentIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Clear';
@@ -12,7 +12,6 @@ import { PostSkeleton } from './Skeleton';
 import { useDispatch } from 'react-redux';
 import styles from './Post.module.scss';
 import { fetchRemovePost } from '../../redux/slices/posts';
-import { Box } from '@mui/material';
 import { ConfirmDialog } from '../confirmDialog';
 
 export const Post = ({
@@ -30,12 +29,10 @@ export const Post = ({
 	isEditable,
 }) => {
 	const dispatch = useDispatch();
-
 	const [confirmOpen, setConfirmOpen] = useState(false);
+
 	const handleOpenConfirm = () => setConfirmOpen(true);
 	const handleCloseConfirm = () => setConfirmOpen(false);
-
-
 	const handleConfirmRemove = () => {
 		dispatch(fetchRemovePost(id));
 		setConfirmOpen(false);
@@ -48,55 +45,83 @@ export const Post = ({
 	return (
 		<Box
 			sx={{
-				maxWidth: isFullPost ? '1440x' : '100%', // ← ограничиваем ширину на FullPost
+				maxWidth: isFullPost ? '1440px' : '100%',
 				width: '100%',
-				mx: 'auto', // ← центрируем
+				mx: 'auto',
 				backgroundColor: 'background.paper',
 				border: '1px solid',
 				borderColor: 'divider',
-				borderRadius: 2,
-				padding: { xs: 2, md: isFullPost ? 4 : 3 },
+				borderRadius: { xs: 1.5, sm: 2 }, // ← меньше радиус на мобильных
+				padding: {
+					xs: isFullPost ? 2 : 1.5,      // ← 320px
+					sm: isFullPost ? 3 : 2,        // ← 375px
+					md: isFullPost ? 4 : 3,        // ← 430px+
+				},
 				boxShadow: 1,
-				mb: 4,
+				mb: { xs: 2, md: 4 },           // ← меньше отступ снизу на мобильных
 				position: 'relative',
 				overflow: 'visible',
 			}}
 		>
 			{isEditable && (
-				<div className={styles.editButtons}>
+				<Box
+					sx={{
+						position: 'absolute',
+						top: { xs: 8, sm: 12 },
+						right: { xs: 8, sm: 12 },
+						display: 'flex',
+						gap: 0.5,
+					}}
+				>
 					<Link to={`/posts/${id}/edit`}>
-						<IconButton color="primary" sx={{ color: 'primary.main' }}>
-							<EditIcon />
+						<IconButton color="primary" size="small" sx={{ color: 'primary.main' }}>
+							<EditIcon fontSize="small" />
 						</IconButton>
 					</Link>
-					<IconButton onClick={handleOpenConfirm} color="error"
-						sx={{ color: 'error.main' }}>
-						<DeleteIcon />
+					<IconButton
+						onClick={handleOpenConfirm}
+						color="error"
+						size="small"
+						sx={{ color: 'error.main' }}
+					>
+						<DeleteIcon fontSize="small" />
 					</IconButton>
-				</div>
+				</Box>
 			)}
+
 			{imageUrl && (
 				<img
 					className={clsx(styles.image, { [styles.imageFull]: isFullPost })}
 					src={imageUrl}
 					alt={title}
+					style={{
+						width: '100%',
+						height: 'auto',
+						borderRadius: '8px',
+						marginBottom: isFullPost ? 24 : 16,
+					}}
 				/>
 			)}
+
 			<div className={styles.wrapper}>
 				<UserInfo {...user} additionalText={createdAt} />
+
 				<div className={styles.indention}>
 					{isFullPost ? (
 						<Typography
-							variant={isFullPost ? "h2" : "h4"}
+							variant="h2"
 							component="h2"
 							sx={{
 								color: 'text.primary',
-								fontSize: isFullPost ? '42px' : '28px',
-								fontWeight: isFullPost ? 900 : 'normal',
-								margin: 0,
-								'&:hover': {
-									color: 'primary.main', // ← цвет из темы при наведении
+								fontSize: {
+									xs: '1.75rem',   // ← 320px — 28px
+									sm: '2.5rem',    // ← 375px — 40px
+									md: '3.5rem',    // ← 430px+ — 56px
 								},
+								fontWeight: 900,
+								margin: 0,
+								lineHeight: 1.2,
+								'&:hover': { color: 'primary.main' },
 							}}
 						>
 							{title}
@@ -108,7 +133,11 @@ export const Post = ({
 							to={`/posts/${id}`}
 							sx={{
 								color: 'text.primary',
-								fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+								fontSize: {
+									xs: '1.25rem',   // ← 320px — 20px
+									sm: '1.5rem',    // ← 375px — 24px
+									md: '2rem',      // ← 430px+ — 32px
+								},
 								lineHeight: 1.3,
 								fontWeight: 700,
 								margin: 0,
@@ -116,49 +145,123 @@ export const Post = ({
 								display: 'block',
 								wordBreak: 'break-word',
 								overflowWrap: 'break-word',
-								'&:hover': {
-									color: 'primary.main',
-								},
+								'&:hover': { color: 'primary.main' },
 							}}
 						>
 							{title}
 						</Typography>
 					)}
-					<ul className={styles.tags}>
-						{tags.map((name) => (
-							<li key={name}>
+
+					{/* Адаптивные теги */}
+					{/* Адаптивные теги */}
+					<Box
+						component="ul"
+						sx={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: {
+								xs: 0.5,    // ← 320px
+								sm: 1,      // ← 768px
+								md: 1.5,    // ← 1024px
+								lg: 2,      // ← 1280px+
+							},
+							padding: 0,
+							margin: {
+								xs: '12px 0 8px 0',
+								sm: '16px 0 12px 0',
+								md: '20px 0 16px 0',
+							},
+							listStyle: 'none',
+						}}
+					>
+						{tags.map((name, index) => (
+							<Box
+								component="li"
+								key={index}
+								sx={{
+									margin: 0,
+								}}
+							>
 								<Typography
 									component={Link}
 									to={`/tags/${encodeURIComponent(name)}`}
 									sx={{
+										display: 'inline-flex',
+										alignItems: 'center',
 										textDecoration: 'none',
 										color: 'primary.main',
 										fontWeight: 'bold',
-										'&:hover': { textDecoration: 'underline' },
+										fontSize: {
+											xs: '0.875rem',    // ← 14px на 320px
+											sm: '0.95rem',     // ← 15px на 768px
+											md: '1.05rem',     // ← 17px на 1024px
+											lg: '1.15rem',     // ← 18px на 1280px+
+										},
+										padding: {
+											xs: '6px 10px',    // ← 320px
+											sm: '8px 14px',    // ← 768px
+											md: '10px 18px',   // ← 1024px
+											lg: '12px 22px',   // ← 1280px+
+										},
+										borderRadius: {
+											xs: '12px',
+											sm: '16px',
+											md: '20px',
+										},
+										backgroundColor: 'action.hover',
+										boxShadow: 1,
+										transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+										'&:hover': {
+											backgroundColor: 'action.selected',
+											boxShadow: 2,
+											textDecoration: 'underline',
+											transform: 'translateY(-1px)',
+										},
+										'&:active': {
+											transform: 'translateY(0)',
+										},
 									}}
 								>
 									#{name}
 								</Typography>
-							</li>
+							</Box>
 						))}
-					</ul>
+					</Box>
+
 					{children && (
-						<Box className={styles.content} sx={{ color: 'text.primary' }}> 
+						<Box className={styles.content} sx={{ color: 'text.primary', mb: 2 }}>
 							{children}
 						</Box>
 					)}
-					<ul className={styles.postDetails}>
-						<li>
-							<EyeIcon />
+
+					{/* Детали поста */}
+					<Box
+						component="ul"
+						sx={{
+							display: 'flex',
+							gap: { xs: 1, sm: 2 },
+							padding: 0,
+							margin: 0,
+							listStyle: 'none',
+							color: 'text.secondary',
+							fontSize: {
+								xs: '0.75rem',   // ← 320px
+								sm: '0.875rem',  // ← 375px
+							},
+						}}
+					>
+						<Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+							<EyeIcon sx={{ fontSize: '1rem' }} />
 							<span>{viewsCount}</span>
-						</li>
-						<li>
-							<CommentIcon />
+						</Box>
+						<Box component="li" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+							<CommentIcon sx={{ fontSize: '1rem' }} />
 							<span>{commentsCount}</span>
-						</li>
-					</ul>
+						</Box>
+					</Box>
 				</div>
 			</div>
+
 			<ConfirmDialog
 				open={confirmOpen}
 				title="Удаление статьи"

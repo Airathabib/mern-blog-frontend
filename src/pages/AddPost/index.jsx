@@ -31,6 +31,10 @@ export const AddPost = () => {
 
 	const isEditing = Boolean(id)
 
+	// const devAPI = `${process.env.REACT_APP_API_URL}`;
+
+
+
 	const handleChangeFile = async (event) => {
 		try {
 			const formData = new FormData();
